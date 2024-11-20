@@ -50,14 +50,15 @@ function App() {
 
       axios
         .post(
-          "https://ufuinaiqr3.execute-api.eu-north-1.amazonaws.com/dev",
+         // "https://ufuinaiqr3.execute-api.eu-north-1.amazonaws.com/dev",
+          "https://gs2o3hn5mk.execute-api.eu-north-1.amazonaws.com/dev",
           body,
           {
             headers: {
               Authorization: `Bearer ${jwtToken}`,
               allowOrigins: ["*"],
-              allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
-              allowHeaders: ["Content-Type"],
+             // allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+              //allowHeaders: ["Content-Type"],
             },
           }
         )
