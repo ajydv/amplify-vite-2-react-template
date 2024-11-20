@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
 import type { Schema } from "../amplify/data/resource";
 import { generateClient } from "aws-amplify/data";
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import axios from 'axios';
+import { useAuthenticator } from "@aws-amplify/ui-react";
+import { CognitoUserPool, CognitoUserSession } from "amazon-cognito-identity-js";
+import amplifyOutputs from "../amplify_outputs.json"; // Adjust path if needed
+import axios from "axios";
 
 const client = generateClient<Schema>();
 
+const poolData = {
+  UserPoolId: amplifyOutputs.auth.user_pool_id,
+  ClientId: amplifyOutputs.auth.user_pool_client_id,
+};
+
+const userPool = new CognitoUserPool(poolData);
+
 function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const { user, signOut } = useAuthenticator();
 
   useEffect(() => {
     client.models.Todo.observeQuery().subscribe({
@@ -15,38 +25,58 @@ function App() {
     });
   }, []);
 
-  const {user, signOut } = useAuthenticator();
+  const handlePost = async () => {
+    const currentUser = userPool.getCurrentUser();
+    if (!currentUser) {
+      alert("No current user logged in");
+      return;
+    }
+
+    currentUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
+      if (err) {
+        console.error("Error fetching session:", err);
+        alert("Error fetching session");
+        return;
+      }
+
+      if (!session) {
+        alert("Session is null");
+        return;
+      }
+
+      const jwtToken = session.getIdToken().getJwtToken();
+      console.log(`jwtToken`,jwtToken)
+      const body = { bucket_name: "demo-lambda-fun-bucket-2" };
+
+      axios
+        .post(
+          "https://ufuinaiqr3.execute-api.eu-north-1.amazonaws.com/dev",
+          body,
+          {
+            headers: {
+              Authorization: `Bearer ${jwtToken}`,
+              allowOrigins: ["*"],
+              allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+              allowHeaders: ["Content-Type"],
+            },
+          }
+        )
+        .then((response) => {
+          alert(`Response: ${JSON.stringify(response.data)}`);
+        })
+        .catch((error) => {
+          console.error("Error making POST request:", error);
+          alert("Error making POST request");
+        });
+    });
+  };
 
   function createTodo() {
     client.models.Todo.create({ content: window.prompt("Todo content") });
   }
 
-  function deleteTodo(id:string){
-    client.models.Todo.delete({id});
-  }
-
-  const handlePost = async()=>{
-    const body = { bucket_name: "demo-lambda-fun-bucket-2" };
-
-    try {
-      const response = await axios.post(
-        //'https://rs189msoe1.execute-api.eu-north-1.amazonaws.com/test-demo-2',
-        //'https://xuxtqe46q7gx3txdeeuxc5j6vq0upgxl.lambda-url.eu-north-1.on.aws/',
-        'https://dqy8074x5d.execute-api.eu-north-1.amazonaws.com/dev',
-        body,
-        {
-          headers: {
-            allowOrigins: ["*"],
-            allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
-            allowHeaders: ["Content-Type"],
-          }
-        }
-      );
-      alert(`Response: ${JSON.stringify(response.data)}`);
-    } catch (error) {
-      console.error('Error making POST request:', error);
-      alert('Error making POST request');
-    }
+  function deleteTodo(id: string) {
+    client.models.Todo.delete({ id });
   }
 
   return (
@@ -56,7 +86,9 @@ function App() {
       <button onClick={createTodo}>+ new</button>
       <ul>
         {todos.map((todo) => (
-          <li key={todo.id} onClick={()=>deleteTodo(todo.id)}>{todo.content}</li>
+          <li key={todo.id} onClick={() => deleteTodo(todo.id)}>
+            {todo.content}
+          </li>
         ))}
       </ul>
       <div>
