@@ -56,8 +56,9 @@ function App() {
       axios
         .post(
          // "https://ufuinaiqr3.execute-api.eu-north-1.amazonaws.com/dev",
-          "https://gs2o3hn5mk.execute-api.eu-north-1.amazonaws.com/dev",
+          //"https://gs2o3hn5mk.execute-api.eu-north-1.amazonaws.com/dev",
           //"https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev",
+          "https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev-test-cors",
           body,
           {
             headers: {
