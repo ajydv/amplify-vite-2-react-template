@@ -46,19 +46,25 @@ function App() {
 
       const jwtToken = session.getIdToken().getJwtToken();
       console.log(`jwtToken`,jwtToken)
-      const body = { bucket_name: "demo-lambda-fun-bucket-2" };
+      //const body = { bucket_name: "demo-lambda-fun-bucket-2" };
+      const body = {
+        bucket_name: "demo-lambda-fun-bucket-2",
+        file_name: "student.json",
+        table_name: "studentjson"
+      };
 
       axios
         .post(
          // "https://ufuinaiqr3.execute-api.eu-north-1.amazonaws.com/dev",
           "https://gs2o3hn5mk.execute-api.eu-north-1.amazonaws.com/dev",
+          //"https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev",
           body,
           {
             headers: {
               Authorization: `Bearer ${jwtToken}`,
-              allowOrigins: ["*"],
-             // allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
-              //allowHeaders: ["Content-Type"],
+              allowOrigins: ["http://localhost:5173"],
+              allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+              allowHeaders: ["Content-Type","X-Amz-Date","Authorization","X-Api-Key","X-Amz-Security-Token"],
             },
           }
         )
