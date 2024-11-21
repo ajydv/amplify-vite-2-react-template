@@ -53,42 +53,28 @@ function App() {
         table_name: "studentjson"
       };
 
-    //   axios
-    //     .post(
-    //      // "https://ufuinaiqr3.execute-api.eu-north-1.amazonaws.com/dev",
-    //       //"https://gs2o3hn5mk.execute-api.eu-north-1.amazonaws.com/dev",
-    //       //"https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev",
-    //       "https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev-test-cors",
-    //       body,
-    //       {
-    //         headers: {
-    //           Authorization: `Bearer ${jwtToken}`,
-    //           allowOrigins: ["https://main.dk6x4ailvdh70.amplifyapp.com"],
-    //           allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
-    //           allowHeaders: ["Content-Type","X-Amz-Date","Authorization","X-Api-Key","X-Amz-Security-Token"],
-    //         },
-    //       }
-    //     )
-    //     .then((response) => {
-    //       alert(`Response: ${JSON.stringify(response.data)}`);
-    //     })
-    //     .catch((error) => {
-    //       console.error("Error making POST request:", error);
-    //       alert("Error making POST request");
-    //     });
-    fetch('https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev-test-cors', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-    .then(response => response.json())
-    .then(data => console.log(data))
-    .catch(error => console.error('Error:', error));
-
-     });
-
+      axios
+        .post(
+         // "https://ufuinaiqr3.execute-api.eu-north-1.amazonaws.com/dev",
+          //"https://gs2o3hn5mk.execute-api.eu-north-1.amazonaws.com/dev",
+          //"https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev",
+          "https://7n9nuuquna.execute-api.eu-north-1.amazonaws.com/dev-test-cors",
+          body,
+          {
+            headers: {
+             // Authorization: `Bearer ${jwtToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        )
+        .then((response) => {
+          alert(`Response: ${JSON.stringify(response.data)}`);
+        })
+        .catch((error) => {
+          console.error("Error making POST request:", error);
+          alert("Error making POST request");
+        });
+    });
   };
 
   function createTodo() {
