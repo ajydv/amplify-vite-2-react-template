@@ -62,7 +62,7 @@ function App() {
           {
             headers: {
               Authorization: `Bearer ${jwtToken}`,
-              allowOrigins: ["http://localhost:5173"],
+              allowOrigins: ["https://main.dk6x4ailvdh70.amplifyapp.com"],
               allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
               allowHeaders: ["Content-Type","X-Amz-Date","Authorization","X-Api-Key","X-Amz-Security-Token"],
             },
