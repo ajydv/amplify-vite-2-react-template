@@ -2,12 +2,12 @@ import React,{useState} from "react";
 import FileUploadModal from "../components/FileUploadModal";
 import InstanceInputsModal from "../components/InstanceInputsModal";
 import ABCReportingModal from "../components/ABCReportingModal";
-import {useNavigate } from "react-router-dom";
+// import {useNavigate } from "react-router-dom";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 
 const Dashboard: React.FC = () => {
   const { user, signOut } = useAuthenticator();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [showFileUploadModal, setShowFileUploadModal] = useState<boolean>(false);
   const [showInstanceInputsModal, setShowInstanceInputsModal] = useState<boolean>(false);
   const [showABCReportingModal, setShowABCReportingModal] = useState<boolean>(false); 
