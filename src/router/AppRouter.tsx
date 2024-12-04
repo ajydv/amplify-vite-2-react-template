@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "../pages/Home"; 
 import Upload from "../pages/Upload";
-import Dashboard from "../pages/dashboard";
+import Dashboard from "../pages/Dashboard";
 import DailyCount from "../pages/DailyCount";
 
 const AppRouter = () => {
