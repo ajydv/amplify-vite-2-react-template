@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getJWTToken } from "../services/jwtService";
@@ -7,9 +7,11 @@ interface FileUploadModalProps {
   showModal: boolean;
   handleCloseModal: () => void;
   handleProceed: () => void;
+  activeWarehouse: { Warehouse_ID: Number, Warehouse_Name: String, Created_Date: String } | null;
+  source: "inputInstance" | "uploadButton" | null;
 }
 
-const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleCloseModal, handleProceed }) => {
+const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleCloseModal, handleProceed,activeWarehouse,source }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
@@ -18,6 +20,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
       setFile(e.target.files[0]);
     }
   };
+
+  useEffect(() => {
+    const setPrevState =()=>{
+      source === "inputInstance" ? console.log('source',source) : console.log(`activeWarehouse`,activeWarehouse);
+      
+      setFile(null);
+    }
+    setPrevState()
+  }, [showModal]);
 
   const handleApiCall = async () => {
    if (!file) {
@@ -45,6 +56,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
           bucket_name: 'test-parts-files-bucket',
           file_name: file.name,
           file: base64File,
+          Warehouse_ID: activeWarehouse?.Warehouse_ID,
         };
 
         const response = await axios.post(
@@ -61,6 +73,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
         const responseData = response.data;
         if(responseData.statusCode==200){
           alert(responseData.message);
+          setFile(null);
           handleProceed();
         }else{
           alert(responseData.message)

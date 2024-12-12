@@ -1,3 +1,4 @@
+import { useAuthenticator } from "@aws-amplify/ui-react";
 import { CognitoUserPool, CognitoUserSession } from "amazon-cognito-identity-js";
 import amplifyOutputs from "../../amplify_outputs.json";
 
@@ -33,4 +34,12 @@ export const getJWTToken = async (): Promise<string | null> => {
       resolve(jwtToken);
     });
   });
+};
+
+export const getUserLoginId = () => {
+  const { user } = useAuthenticator();
+  if (user && user.signInDetails && user.signInDetails.loginId) {
+    return user.signInDetails.loginId;
+  }
+  return null;
 };

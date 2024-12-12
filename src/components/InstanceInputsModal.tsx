@@ -1,89 +1,46 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
-import { getJWTToken } from "../services/jwtService";
+import { getJWTToken,getUserLoginId } from "../services/jwtService";
 
 interface InstanceInputsModalProps {
   showModal: boolean;
   handleCloseModal: () => void;
   handleProceed: () => void;
+  onInstanceCreated: () => void;
 }
 
-const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, handleCloseModal, handleProceed }) => {
-  const [WarehouseName, setWarehouseName] = useState("");
-  const [SampleSize, setSampleSize] = useState(0);
-  const [CategoryASize, setCategoryASize] = useState(0);
-  const [CategoryBSize, setCategoryBSize] = useState(0);
-  const [CategoryCSize, setCategoryCSize] = useState(0);
-  const [WeightedCostPercentage, setWeightedCostPercentage] = useState(0);
-  const [WeightedConsumptionPercentage, setWeightedConsumptionPercentage] = useState(0);
+const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, handleCloseModal, handleProceed,onInstanceCreated }) => {
+  const [Warehouse_Name, setWarehouse_Name] = useState("");
+  const [Sample_size, setSample_size] = useState(10);
+  const [Category_A_size, setCategory_A_size] = useState(20);
+  const [Category_B_size, setCategory_B_size] = useState(30);
+  const [Category_C_size, setCategory_C_size] = useState(50);
+  const [Weighted_Cost_Percentage, setWeighted_Cost_Percentage] = useState(50);
+  const [Weighted_Consumption_Percentage, setWeighted_Consumption_Percentage] = useState(50);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(true);
+  const user = getUserLoginId();
 
   useEffect(() => {
-    if (!showModal) return;
-    const fetchInitialData = async () => {
-      const token = await getJWTToken();
-      console.log(token);
-      if (!token) {
-        console.error("Token is required");
-        setIsFetching(false);
-        return;
-      }
-      setIsFetching(true);
-      const formData = {
-        'resource_name':'WarehouseInventoryView',
-        'condition':''
-      };
-      try {
-        const response = await axios.post("https://hphhshrpva.execute-api.us-east-2.amazonaws.com/dev/get-data", 
-          JSON.stringify(formData),
-          {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
-        const responseData = response.data;
-        if(responseData.statusCode==200){
-          const warehouseInvData = responseData.data[0]
-          console.log('warehouseInvData',warehouseInvData);
-          setWarehouseName(warehouseInvData.WarehouseName || "Pharma Warehouse D");
-          setSampleSize(warehouseInvData.SampleSize || 1);
-          setCategoryASize(warehouseInvData.CategoryASizeSize || 20);
-          setCategoryBSize(warehouseInvData.CategoryBSize || 30);
-          setCategoryCSize(warehouseInvData.CategoryCSize || 50);
-          setWeightedCostPercentage(warehouseInvData.WeightedCostPercentage || 50);
-          setWeightedConsumptionPercentage(warehouseInvData.WeightedConsumptionPercentage || 50);
-          setIsFetching(false);
-        }
-        // else if(data.statusCode==204){
-        //   setInstanceName(data.instanceName || "Pharma Warehouse D14");
-        //   setSampleSize(data.SampleSize || 10);
-        //   setCategoryASizeSize(data.CategoryASize || 20);
-        //   setCategoryBSize(data.CategoryBSize || 30);
-        //   setCategoryCSize(data.CategoryCSize || 50);
-        //   setIsFetching(false);
-        // }
-        
+    const setPrevState=()=>{
+      setWarehouse_Name("")
+      setSample_size(10)
+      setCategory_A_size(20)
+      setCategory_B_size(30)
+      setCategory_C_size(50)
+      setWeighted_Cost_Percentage(50)
+      setWeighted_Consumption_Percentage(50)
 
-        
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
-        alert("Failed to fetch initial data. Please try again.");
-        setIsFetching(false);
-      }
-    };
-
-    fetchInitialData();
+    }
+    setPrevState()
   }, [showModal]);
 
   const handleSubmit = async()=>{
-    if (!WarehouseName.trim()) {
+    if (!Warehouse_Name.trim()) {
       alert("Instance Name is required.");
       return;
     }
-    if (CategoryASize + CategoryBSize + CategoryCSize !== 100) {
+    if (Category_A_size + Category_B_size + Category_C_size !== 100) {
       alert("Category percentages must add up to 100%.");
       return;
     }
@@ -95,18 +52,46 @@ const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, ha
         alert("Unable to retrieve JWT token.");
         return;
       }
-      const response = await axios.post("", {
-        WarehouseName,
-        SampleSize,
-        categories: { A: CategoryASize, B: CategoryBSize, C: CategoryCSize },
-      });
+      const Created_By = user;
 
+      const formData = {
+        "resource_name": "ProcWarehouseInstances",
+          "data": {
+            'action':'insert',
+            Warehouse_Name,
+            Sample_size,
+            Category_A_size,
+            Category_B_size,
+            Category_C_size,
+            Weighted_Cost_Percentage,
+            Weighted_Consumption_Percentage,
+            'Is_Active':1,
+            Created_By
+          }
+        }
+      console.log(`formData`,formData);
+      
+      const response = await axios.post("https://hphhshrpva.execute-api.us-east-2.amazonaws.com/dev/add-data",
+        JSON.stringify(formData),
+        {
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+      
       if (response.status === 200) {
-        const data = response.data;
-        alert(`API Response: ${data.message}`);
-        setIsLoading(false);
-        handleCloseModal();
-        handleProceed();
+        const responseData = response.data;
+        if(responseData.statusCode===200){
+          alert(`API Response: ${responseData.message}`);
+          setIsLoading(false);
+          handleCloseModal();
+          onInstanceCreated();
+          handleProceed();
+        }else{
+          alert(`API Response: ${responseData.message}`);
+          setIsLoading(false);
+        }
+        
       } else {
         alert("Failed to submit instance. Please try again.");
         setIsLoading(false);
@@ -118,26 +103,6 @@ const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, ha
     }
     
   };
-  if (isFetching) {
-    return (
-      <div
-        className={`modal ${showModal ? "show" : ""}`}
-        tabIndex={-1}
-        style={{ display: showModal ? "block" : "none" }}
-      >
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Loading...</h5>
-            </div>
-            <div className="modal-body">
-              <p className="text-center mb-4">Fetching the initial data...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
   return (
     <div className={`modal ${showModal ? "show" : ""}`} tabIndex={-1} style={{ display: showModal ? "block" : "none" }}>
       <div className="modal-dialog">
@@ -152,46 +117,46 @@ const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, ha
             <form>
               {/* Instance Name */}
               <div className="mb-3">
-                <label htmlFor="WarehouseName" className="form-label fw-bold">Instance Name:</label>
-                <input type="text" className="form-control" id="WarehouseName" placeholder="Instance Name" value={WarehouseName}
-                  onChange={(e) => setWarehouseName(e.target.value)} />
+                <label htmlFor="Warehouse_Name" className="form-label fw-bold">Instance Name:</label>
+                <input type="text" className="form-control" id="Warehouse_Name" placeholder="Instance Name" value={Warehouse_Name}
+                  onChange={(e) => setWarehouse_Name(e.target.value)} />
               </div>
 
               {/* Sample Size */}
               <div className="mb-4">
                 <div className="d-flex justify-content-between align-items-center">
-                  <label htmlFor="SampleSize" className="form-label fw-bold mb-0">Sample Size:</label>
-                  <span className="fw-bold text-primary">{SampleSize}%</span>
+                  <label htmlFor="Sample_size" className="form-label fw-bold mb-0">Sample Size:</label>
+                  <span className="fw-bold text-primary">{Sample_size}%</span>
                 </div>
-                <input type="range" className="form-range" id="SampleSize" min="0" max="100" value={SampleSize}
-                  onChange={(e) => setSampleSize(Number(e.target.value))} />
+                <input type="range" className="form-range" id="Sample_size" min="0" max="100" value={Sample_size}
+                  onChange={(e) => setSample_size(Number(e.target.value))} />
               </div>
 
               {/* Category Inputs */}
               <div className="row g-3">
                 <div className="col-md-4">
-                  <label htmlFor="CategoryASize" className="form-label fw-bold">Category A:</label>
+                  <label htmlFor="Category_A_size" className="form-label fw-bold">Category A:</label>
                   <div className="input-group">
-                    <input type="number" className="form-control" id="CategoryASize" value={CategoryASize}
-                      onChange={(e) => setCategoryASize(Number(e.target.value))}/>
+                    <input type="number" className="form-control" id="Category_A_size" value={Category_A_size}
+                      onChange={(e) => setCategory_A_size(Number(e.target.value))}/>
                     <span className="input-group-text">%</span>
                   </div>
                   <small className="text-muted">(Top consumption)</small>
                 </div>
                 <div className="col-md-4">
-                  <label htmlFor="CategoryBSize" className="form-label fw-bold">Category B:</label>
+                  <label htmlFor="Category_B_size" className="form-label fw-bold">Category B:</label>
                   <div className="input-group">
-                    <input type="number" className="form-control" id="CategoryBSize" value={CategoryBSize}
-                      onChange={(e) => setCategoryBSize(Number(e.target.value))} />
+                    <input type="number" className="form-control" id="Category_B_size" value={Category_B_size}
+                      onChange={(e) => setCategory_B_size(Number(e.target.value))} />
                     <span className="input-group-text">%</span>
                   </div>
                   <small className="text-muted">(Middle consumption)</small>
                 </div>
                 <div className="col-md-4">
-                  <label htmlFor="CategoryCSize" className="form-label fw-bold">Category C:</label>
+                  <label htmlFor="Category_C_size" className="form-label fw-bold">Category C:</label>
                   <div className="input-group">
-                    <input type="number" className="form-control" id="CategoryCSize" value={CategoryCSize}
-                      onChange={(e) => setCategoryCSize(Number(e.target.value))} />
+                    <input type="number" className="form-control" id="Category_C_size" value={Category_C_size}
+                      onChange={(e) => setCategory_C_size(Number(e.target.value))} />
                     <span className="input-group-text">%</span>
                   </div>
                   <small className="text-muted">(Lowest consumption)</small>
@@ -199,18 +164,18 @@ const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, ha
               </div>
               <div className="row g-3">
               <div className="col-md-5">
-                  <label htmlFor="WeightedCostPercentage" className="form-label fw-bold">Weighted Cost Percentage:</label>
+                  <label htmlFor="Weighted_Cost_Percentage" className="form-label fw-bold">Weighted Cost Percentage:</label>
                   <div className="input-group">
-                    <input type="number" className="form-control" id="WeightedCostPercentage" value={WeightedCostPercentage}
-                      onChange={(e) => setWeightedCostPercentage(Number(e.target.value))} />
+                    <input type="number" className="form-control" id="Weighted_Cost_Percentage" value={Weighted_Cost_Percentage}
+                      onChange={(e) => setWeighted_Cost_Percentage(Number(e.target.value))} />
                     <span className="input-group-text">%</span>
                   </div>
                 </div>
                 <div className="col-md-5">
-                  <label htmlFor="WeightedConsumptionPercentage" className="form-label fw-bold">Weighted Consumption Percentage:</label>
+                  <label htmlFor="Weighted_Consumption_Percentage" className="form-label fw-bold">Weighted Consumption Percentage:</label>
                   <div className="input-group">
-                    <input type="number" className="form-control" id="WeightedConsumptionPercentage" value={WeightedConsumptionPercentage}
-                      onChange={(e) => setWeightedConsumptionPercentage(Number(e.target.value))} />
+                    <input type="number" className="form-control" id="Weighted_Consumption_Percentage" value={Weighted_Consumption_Percentage}
+                      onChange={(e) => setWeighted_Consumption_Percentage(Number(e.target.value))} />
                     <span className="input-group-text">%</span>
                   </div>
                 </div>
