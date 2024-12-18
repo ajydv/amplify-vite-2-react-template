@@ -125,7 +125,6 @@ const Dashboard: React.FC = () => {
         showModal={showFileUploadModal}
         handleCloseModal={handleCloseFileUploadModal}
         handleProceed={() => setShowABCReportingModal(true)}
-        activeWare={activeWarehouse}
         source={source}
       />
 

@@ -2,23 +2,20 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getJWTToken } from "../services/jwtService";
-import { RootState, AppDispatch } from "../redux/store";
-import { setWarehouses, setLoading, setActiveWarehouse } from "../redux/slices/warehouse/actions";
-import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { useSelector } from "react-redux";
 
 interface FileUploadModalProps {
   showModal: boolean;
   handleCloseModal: () => void;
   handleProceed: () => void;
-  activeWare: { Warehouse_ID: Number, Warehouse_Name: String, Created_Date: String } | null;
   source: "inputInstance" | "uploadButton" | null;
 }
 
-const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleCloseModal, handleProceed,activeWare,source }) => {
+const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleCloseModal, handleProceed,source }) => {
   console.log(`source`,source)
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const dispatch = useDispatch<AppDispatch>();
   const { activeWarehouse } = useSelector(
     (state: RootState) => state.warehouse
   );
