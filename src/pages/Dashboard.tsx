@@ -1,180 +1,184 @@
-import React,{useEffect, useState} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import FileUploadModal from "../components/FileUploadModal";
 import InstanceInputsModal from "../components/InstanceInputsModal";
 import ABCReportingModal from "../components/ABCReportingModal";
-import {useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuthenticator } from "@aws-amplify/ui-react";
-import axios from "axios";
-import { getJWTToken,getUserLoginId } from "../services/jwtService";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "../redux/store";
+import { setWarehouses, setLoading, setActiveWarehouse } from "../redux/slices/warehouse/actions";
+import { apiPost } from "../services/apiService";
 
 
 const Dashboard: React.FC = () => {
   const { signOut } = useAuthenticator();
   const navigate = useNavigate();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [sideLoading, setSideLoading] = useState(true);
-  const [showFileUploadModal, setShowFileUploadModal] = useState<boolean>(false);
-  const [showInstanceInputsModal, setShowInstanceInputsModal] = useState<boolean>(false);
-  const [showABCReportingModal, setShowABCReportingModal] = useState<boolean>(false); 
+  const dispatch = useDispatch<AppDispatch>();
+  const { warehouses, activeWarehouse, loading } = useSelector(
+    (state: RootState) => state.warehouse
+  );
 
-  useEffect(()=>{
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [showFileUploadModal, setShowFileUploadModal] = useState(false);
+  const [showInstanceInputsModal, setShowInstanceInputsModal] = useState(false);
+  const [showABCReportingModal, setShowABCReportingModal] = useState(false);
+  const [source, setSource] = useState<"inputInstance" | "uploadButton" | null>(null);
+
+  const sidePanelRef = useRef<HTMLDivElement | null>(null);
+  //const warehouseRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
     fetchWarehouses();
-  },[])
+  }, []);
+
+  useEffect(() => {
+    if (sidePanelRef.current && activeIndex >= 0) {
+      const cardHeight = 85;
+      const scrollPosition = activeIndex * cardHeight;
+      sidePanelRef.current.scrollTop = scrollPosition;
+    }
+  }, [activeIndex]);
+
+  const fetchWarehouses = async (val:String='') => {
+    console.log(`source`,source)
+    dispatch(setLoading(true));
+    const formData = { resource_name: "WarehouseInstancesView", condition: "" };
+    try {
+      const response = await apiPost("/get-data", formData);
+      if (response.data.statusCode === 200) {
+        dispatch(setWarehouses(response.data.data));
+        if (response.data.data.length > 0 && !activeWarehouse) {
+          dispatch(setActiveWarehouse(response.data.data[0]));
+          setActiveIndex(0);
+        }
+        else if (activeWarehouse) {
+          const prevIndex = response.data.data.findIndex(
+            (w: any) => w.Warehouse_ID === activeWarehouse.Warehouse_ID
+          );
+          if(val==="fromInput"){
+            setActiveIndex(0);
+            dispatch(setActiveWarehouse(response.data.data[0]));
+          }else{
+            setActiveIndex(prevIndex >= 0 ? prevIndex : 0);
+            dispatch(setActiveWarehouse(response.data.data[prevIndex >= 0 ? prevIndex : 0]));
+          }
+        }
+      }else{
+        dispatch(setWarehouses([]));
+        dispatch(setLoading(false));
+      }
+    } catch (error) {
+      console.error("Error fetching warehouse data:", error);
+      dispatch(setLoading(false));
+    }
+  };
+
+  const handleActiveClick = (index: number) => {
+    setActiveIndex(index);
+    const selectedWarehouse = warehouses[index];
+    dispatch(setActiveWarehouse(selectedWarehouse));
+  };
 
   const handleShowFileUploadModal = () => {
     setShowFileUploadModal(true);
     setSource("inputInstance");
     setShowInstanceInputsModal(false);
-  }
-  const handleCloseFileUploadModal = () => setShowFileUploadModal(false);
+  };
+  const dashboarUploadPart = () => {
+    setShowFileUploadModal(true);
+    setSource("uploadButton");
+    setShowInstanceInputsModal(false);
+  };
 
-  const handleShowABCReportingModal = () => {
-    setShowFileUploadModal(false);  
-    setShowABCReportingModal(true);
-  };
-  const handleShowInstanceInputsModal = () => {
-    setShowInstanceInputsModal(true);
-  };
+  const handleCloseFileUploadModal = () =>{ setShowFileUploadModal(false);}
   const handleCloseInstanceInputsModal = () => setShowInstanceInputsModal(false);
-
   const handleCloseABCReportingModal = () => setShowABCReportingModal(false);
-  const [source, setSource] = useState<"inputInstance" | "uploadButton" | null>(null);
-  const [warehouses, setWarehouses] = useState<Array<{Warehouse_ID:Number,Warehouse_Name:String,Created_Date:String}>>([]);
-  const [activeWarehouse, setActiveWarehouse] = useState<{ Warehouse_ID: Number, Warehouse_Name: String, Created_Date: String } | null>(null);
-
-  const fetchWarehouses=async()=>{
-    const token = await getJWTToken();
-    const formData = {
-      'resource_name':'WarehouseInstancesView',
-      'condition':''
-    };
-    try{
-      const response = await axios.post("https://hphhshrpva.execute-api.us-east-2.amazonaws.com/dev/get-data", 
-        JSON.stringify(formData),
-        {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const responseData = response.data;
-      if(responseData.statusCode==200){
-        setWarehouses([]);
-        setWarehouses(responseData.data);
-        setSideLoading(false)
-        if (responseData.data.length > 0) {
-          const defaultWarehouse = responseData.data[0];
-          setActiveWarehouse(defaultWarehouse);
-          setActiveIndex(0);
-        }
-      }
-    }catch (error) {
-      console.error("Error fetching warehouse data:", error);
-    }
-  };
-
-  const handleActiveClick = (index:number) => {
-    setActiveIndex(index);
-    const selectedWarehouse = warehouses[index];
-    setActiveWarehouse(selectedWarehouse);
-  };
 
   const refreshWarehouses = () => {
-    setSideLoading(true)
-    fetchWarehouses();
+    fetchWarehouses('fromInput');
   };
-  const handleOpenFileUploadDirectly = () => {
-    setSource("uploadButton");
-    setShowFileUploadModal(true);
-  };
+
   return (
     <div className="container-fluid position-relative">
-  <header className="row bg-primary text-white py-3 px-4">
-    <div className="col-md-6 d-flex align-items-center">
-      <h5>Welcome, {getUserLoginId()}</h5>
-    </div>
-    <div className="col-md-6 d-flex text-end">
-      <div className="col-md-8">
-        <button className="btn btn-light" onClick={handleShowInstanceInputsModal}>
-          Create New Cycle Counting Instance
-        </button>
-      </div>
-      <div className="col-md-3">
-        <button className="btn btn-danger" onClick={signOut}>
-          Sign Out
-        </button>
-      </div>
-    </div>
-  </header>
-  {showFileUploadModal || showInstanceInputsModal || showABCReportingModal ? (
-        <div className="modal-backdrop fade show"></div>
-      ) : null}
-      {/* InstanceInputsModal */}
-      <InstanceInputsModal
-              showModal={showInstanceInputsModal}
-              handleCloseModal={handleCloseInstanceInputsModal}
-              handleProceed={handleShowFileUploadModal}
-              onInstanceCreated={refreshWarehouses}
-            />
+      <header className="row bg-primary text-white py-3 px-4">
+        <div className="col-md-6 d-flex align-items-center">
+          <h5>Welcome</h5>
+        </div>
+        <div className="col-md-6 text-end">
+          <button className="btn btn-light" onClick={() => setShowInstanceInputsModal(true)}>
+            Create New Cycle Counting Instance
+          </button>
+          <button className="btn btn-danger ms-2" onClick={signOut}>
+            Sign Out
+          </button>
+        </div>
+      </header>
 
-      {/* FileUploadModal */}
-      <FileUploadModal 
-        showModal={showFileUploadModal} 
-        handleCloseModal={handleCloseFileUploadModal} 
-        handleProceed={handleShowABCReportingModal}
-        activeWarehouse={activeWarehouse}
+      <InstanceInputsModal
+        showModal={showInstanceInputsModal}
+        handleCloseModal={handleCloseInstanceInputsModal}
+        handleProceed={handleShowFileUploadModal}
+        onInstanceCreated={refreshWarehouses}
+      />
+
+      <FileUploadModal
+        showModal={showFileUploadModal}
+        handleCloseModal={handleCloseFileUploadModal}
+        handleProceed={() => setShowABCReportingModal(true)}
+        activeWare={activeWarehouse}
         source={source}
       />
 
-      {/* ABCReportingModal */}
-      <ABCReportingModal 
-        showModal={showABCReportingModal} 
-        handleCloseModal={handleCloseABCReportingModal} 
+      <ABCReportingModal
+        showModal={showABCReportingModal}
+        handleCloseModal={handleCloseABCReportingModal}
       />
-  <div className="row mt-4">
-      <aside className="col-lg-3 col-md-4 mb-4 position-relative" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-      {sideLoading ? (
+
+      <div className="row mt-4">
+        <aside className="col-lg-3 col-md-4 mb-4 position-relative" ref={sidePanelRef} style={{ maxHeight: "80vh", overflowY: "auto" }}>
+          {loading ? (
             <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
             </div>
-          </div>
+          ) : warehouses.length === 0 ? (
+            <div className="text-center mt-5">
+              <p className="text-muted">No instances available</p>
+            </div>
           ) : (
             warehouses.map((warehouse, index) => (
               <div
-                key={index}
-                className={`card position-relative z-index-1 ${index > 0  ? "mt-3" : ""} ${
-                  activeIndex === index ? "active-item" : ""
+                key={warehouse.Warehouse_ID}
+                className={`card position-relative mt-3 ${
+                  activeIndex === index ? "border-primary" : ""
                 }`}
                 onClick={() => handleActiveClick(index)}
-                style={{
-                  cursor: "pointer",
-                  border: activeIndex === index ? "2px solid #007bff" : "",
-                }}
+                style={{ cursor: "pointer" }}
               >
                 <div className="card-body">
                   <h5 className="card-title">
-                    {warehouse.Warehouse_Name}{" "}
+                    {warehouse.Warehouse_Name}
                     {activeIndex === index && (
-                      <span className="badge bg-success p-1 fs-6 ms-2">Active</span>
+                      <span className="badge bg-success ms-2">Active</span>
                     )}
                   </h5>
                   <p className="card-subtitle text-muted">
-                    Created {warehouse.Created_Date}
+                    Created: {warehouse.Created_Date}
                   </p>
                 </div>
               </div>
             ))
           )}
         </aside>
-
-    <main className="col-lg-9 col-md-8 position-relative">
+        <main className="col-lg-9 col-md-8 position-relative">
       <div className="card position-absolute top-0 start-0 w-100 h-100 bg-light z-index-0">
         <div className="card-body"></div>
       </div>
       <div className="row mb-4 position-relative z-index-1">
         <h4 className="mb-3 mt-4">Total Inventory Overview</h4>
         <div className="col-md-4 mb-3">
-          <button className="btn btn-primary w-100 rounded-pill" onClick={handleOpenFileUploadDirectly}>
+        <button className="btn btn-primary w-100 rounded-pill" onClick={()=>dashboarUploadPart()}>
             Upload Parts File
           </button>
         </div>
@@ -196,7 +200,7 @@ const Dashboard: React.FC = () => {
           <div className="card">
             <div className="card-body">
               <h6 className="card-title">Part Numbers</h6>
-              <p>1012</p>
+              <p>N/A</p>
               <button className="btn btn-primary btn-sm w-100">
                 View Product List
               </button>
@@ -218,7 +222,7 @@ const Dashboard: React.FC = () => {
           <div className="card">
             <div className="card-body">
               <h6 className="card-title">Today's Count</h6>
-              <p>10 part numbers - 528 parts</p>
+              <p>N/A part numbers - N/A parts</p>
               <button className="btn btn-primary btn-sm w-100">
                 See Today's Count
               </button>
@@ -232,11 +236,11 @@ const Dashboard: React.FC = () => {
             <div className="card-body">
               <h6 className="card-title">ABC Categorization</h6>
               <p>
-                A: 66 part numbers (Top 20%)
+                A: N/A part numbers (Top 20%)
                 <br />
-                B: 146 part numbers (Next 30%)
+                B: N/A part numbers (Next 30%)
                 <br />
-                C: 800 part numbers (Last 50%)
+                C: N/A part numbers (Last 50%)
               </p>
               <button className="btn btn-primary btn-sm w-100">
                 See ABC Categories
@@ -249,11 +253,11 @@ const Dashboard: React.FC = () => {
             <div className="card-body">
               <h6 className="card-title">Total Inventory</h6>
               <p>
-                9324 Items
+                N/A Items
                 <br />
-                Batches in Production: 2
+                Batches in Production: N/A
                 <br />
-                Raw Materials: 6083
+                Raw Materials: N/A
               </p>
               <button className="btn btn-primary btn-sm w-100">
                 Warehouse Inventory
@@ -266,11 +270,11 @@ const Dashboard: React.FC = () => {
             <div className="card-body">
               <h6 className="card-title">Forecasted Count</h6>
               <p>
-                Tomorrow - 202 parts
+                Tomorrow - N/A parts
                 <br />
-                10/19/2024 - 264 parts
+                Today - N/A parts
                 <br />
-                10/20/2024 - 297 parts
+                Yesterday - N/A parts
               </p>
               <button className="btn btn-primary btn-sm w-100">
                 See Calendar
@@ -280,13 +284,8 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
     </main>
-  </div>
-
-  {/* <footer className="row bg-warning text-white py-3 text-center">
-    <p>&copy; 2024 Your Company Name. All rights reserved.</p>
-  </footer> */}
-</div>
-
+      </div>
+    </div>
   );
 };
 

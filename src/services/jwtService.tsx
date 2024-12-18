@@ -1,5 +1,5 @@
 import { useAuthenticator } from "@aws-amplify/ui-react";
-import { CognitoUserPool, CognitoUserSession } from "amazon-cognito-identity-js";
+import { CognitoUserPool, CognitoUserSession,CognitoRefreshToken } from "amazon-cognito-identity-js";
 import amplifyOutputs from "../../amplify_outputs.json";
 
 const poolData = {
@@ -9,14 +9,14 @@ const poolData = {
 
 const userPool = new CognitoUserPool(poolData);
 
-export const getJWTToken = async (): Promise<string | null> => {
+export const getJWTToken = async (): Promise<{ jwtToken: string | null, refreshToken: string | null }> => {
   const currentUser = userPool.getCurrentUser();
   if (!currentUser) {
     console.error("No current user logged in");
-    return null;
+    return { jwtToken: null, refreshToken: null };
   }
 
-  return new Promise<string | null>((resolve, reject) => {
+  return new Promise<{ jwtToken: string | null, refreshToken: string | null }>((resolve, reject) => {
     currentUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
       if (err) {
         console.error("Error fetching session:", err);
@@ -31,7 +31,8 @@ export const getJWTToken = async (): Promise<string | null> => {
       }
 
       const jwtToken = session.getIdToken().getJwtToken();
-      resolve(jwtToken);
+      const refreshToken = session.getRefreshToken().getToken();
+      resolve({ jwtToken, refreshToken });
     });
   });
 };
@@ -42,4 +43,29 @@ export const getUserLoginId = () => {
     return user.signInDetails.loginId;
   }
   return null;
+};
+
+export const refreshSession = async (refreshToken: string) => {
+  const currentUser = userPool.getCurrentUser();
+  if (!currentUser) {
+    console.error("No current user logged in");
+    return;
+  }
+
+  return new Promise((resolve, reject) => {
+    const cognitoRefreshToken = new CognitoRefreshToken({ RefreshToken: refreshToken });
+    currentUser.refreshSession(cognitoRefreshToken, (err, session) => {
+      if (err) {
+        console.error("Error refreshing session:", err);
+        reject("Error refreshing session");
+        return;
+      }
+
+      const newAccessToken = session.getAccessToken().getJwtToken();
+      const newRefreshToken = session.getRefreshToken().getToken();
+      console.log("New Access Token:", newAccessToken);
+      console.log("New Refresh Token:", newRefreshToken);
+      resolve({ newAccessToken, newRefreshToken });
+    });
+  });
 };

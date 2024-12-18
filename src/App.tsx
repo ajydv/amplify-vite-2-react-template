@@ -1,15 +1,16 @@
-import AppRouter from "../src/router/AppRouter"; 
+import React from "react";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { store, persistor } from "../src/redux/store";
+import AppRouter from "../src/router/AppRouter";
 import "bootstrap/dist/css/bootstrap.min.css";
-//import { useAuthenticator } from "@aws-amplify/ui-react";
 
-function App() {
-  //const { user, signOut } = useAuthenticator();
-
-  return (
-    <div className="App">
+const App: React.FC = () => (
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
       <AppRouter />
-    </div>
-  );
-}
+    </PersistGate>
+  </Provider>
+);
 
 export default App;

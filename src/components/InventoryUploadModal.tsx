@@ -2,41 +2,31 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getJWTToken } from "../services/jwtService";
-import { RootState, AppDispatch } from "../redux/store";
-import { setWarehouses, setLoading, setActiveWarehouse } from "../redux/slices/warehouse/actions";
-import { useDispatch, useSelector } from "react-redux";
 
-interface FileUploadModalProps {
+interface InventoryUploadModalProps {
   showModal: boolean;
   handleCloseModal: () => void;
   handleProceed: () => void;
-  activeWare: { Warehouse_ID: Number, Warehouse_Name: String, Created_Date: String } | null;
+  activeWarehouse: { Warehouse_ID: Number, Warehouse_Name: String, Created_Date: String } | null;
   source: "inputInstance" | "uploadButton" | null;
 }
 
-const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleCloseModal, handleProceed,activeWare,source }) => {
-  console.log(`source`,source)
+const InventoryUploadModal: React.FC<InventoryUploadModalProps> = ({ showModal, handleCloseModal, handleProceed,activeWarehouse,source }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const dispatch = useDispatch<AppDispatch>();
-  const { activeWarehouse } = useSelector(
-    (state: RootState) => state.warehouse
-  );
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
     }
   };
-    useEffect(()=>{
-      setPrevState()
-    },[activeWarehouse])
-    const setPrevState =()=>{
-      console.log('activeWarehouse',activeWarehouse)
-    // console.log(`activeWarehouse fileupload`,activeWarehouse);
-    
-    setFile(null);
-    }
+
   useEffect(() => {
+    const setPrevState =()=>{
+      source === "inputInstance" ? console.log('source',source) : console.log(`activeWarehouse`,activeWarehouse);
+      
+      setFile(null);
+    }
     setPrevState()
   }, [showModal]);
 
@@ -49,7 +39,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
     setIsUploading(true);
 
     try {
-      const { jwtToken } = await getJWTToken();
+      const jwtToken = await getJWTToken();
 
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -67,7 +57,6 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
           file_name: file.name,
           file: base64File,
           Warehouse_ID: activeWarehouse?.Warehouse_ID,
-          Warehouse_Name: activeWarehouse?.Warehouse_Name
         };
 
         const response = await axios.post(
@@ -106,12 +95,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
       <div className="modal-dialog">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Step 2: Upload Parts File</h5>
+            <h5 className="modal-title">Step 3: Connect Inventory File</h5>
             <button type="button" className="btn-close" onClick={handleCloseModal}></button>
           </div>
           <div className="modal-body">
             <p>
-              Please upload your list of parts below. File format should be Excel (.xlsx). The file columns will need to match exactly with the columns in the example file.
+              Please connect your inventory file below. File format should be Excel (.xlsx). The file columns will need to match exactly with the columns in the example file.
             </p>
             <div className="mb-3">
               <label htmlFor="fileUpload" className="form-label">
@@ -121,16 +110,14 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
             </div>
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={handleCloseModal} disabled={isUploading}>
-              Close
-            </button>
+           
             <button
               type="button"
               className="btn btn-primary"
               onClick={handleApiCall}
               disabled={isUploading}
             >
-              {isUploading ? "Uploading..." : "Proceed to Next Step"}
+              {isUploading ? "Uploading..." : "Done"}
             </button>
           </div>
         </div>
@@ -139,4 +126,4 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
   );
 };
 
-export default FileUploadModal;
+export default InventoryUploadModal;

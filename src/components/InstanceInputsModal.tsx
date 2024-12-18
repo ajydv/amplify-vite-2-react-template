@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import { getJWTToken,getUserLoginId } from "../services/jwtService";
+import { apiPost } from "../services/apiService";
 
 interface InstanceInputsModalProps {
   showModal: boolean;
@@ -46,7 +47,7 @@ const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, ha
     }
     setIsLoading(true);
     try {
-      const jwtToken = await getJWTToken();
+      const { jwtToken } = await getJWTToken();
     
       if (!jwtToken) {
         alert("Unable to retrieve JWT token.");
@@ -71,13 +72,7 @@ const InstanceInputsModal: React.FC<InstanceInputsModalProps> = ({ showModal, ha
         }
       console.log(`formData`,formData);
       
-      const response = await axios.post("https://hphhshrpva.execute-api.us-east-2.amazonaws.com/dev/add-data",
-        JSON.stringify(formData),
-        {
-        headers: {
-          Authorization: `Bearer ${jwtToken}`,
-        },
-      });
+      const response = await apiPost("/add-data",formData);
       
       if (response.status === 200) {
         const responseData = response.data;
