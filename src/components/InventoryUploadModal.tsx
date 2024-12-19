@@ -88,12 +88,14 @@ const InventoryUploadModal: React.FC<InventoryUploadModalProps> = ({ showModal, 
            setFile(null);
            handleProceed();
          }else{
+            resetForm()
            alert(responseData.message)
          }
        };
      } catch (error) {
        console.error("Error uploading file:", error);
        setIsUploading(false);
+       resetForm()
        alert("Error uploading file");
      }
    };

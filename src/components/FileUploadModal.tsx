@@ -86,10 +86,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
           setFile(null);
           handleProceed();
         }else{
+          resetForm();
           alert(responseData.message)
         }
       };
     } catch (error) {
+      resetForm();
       console.error("Error uploading file:", error);
       setIsUploading(false);
       alert("Error uploading file");
