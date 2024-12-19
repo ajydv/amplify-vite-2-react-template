@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
 import { getJWTToken,getUserLoginId } from "../services/jwtService";
 import { apiPost } from "../services/apiService";
 

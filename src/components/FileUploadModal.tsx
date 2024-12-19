@@ -26,13 +26,15 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
   };
     useEffect(()=>{
       setPrevState()
-    },[activeWarehouse])
+    },[activeWarehouse]);
+
     const setPrevState =()=>{
       console.log('activeWarehouse',activeWarehouse)
     // console.log(`activeWarehouse fileupload`,activeWarehouse);
     
     setFile(null);
     }
+    
   useEffect(() => {
     setPrevState()
   }, [showModal]);
@@ -69,7 +71,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
 
         const response = await axios.post(
           `https://hphhshrpva.execute-api.us-east-2.amazonaws.com/dev/aj-auth-test`,
-          JSON.stringify(formData),
+          formData,
           {
             headers: {
               Authorization: `Bearer ${jwtToken}`,

@@ -9,6 +9,12 @@ import { RootState, AppDispatch } from "../redux/store";
 import { setWarehouses, setLoading, setActiveWarehouse } from "../redux/slices/warehouse/actions";
 import { apiPost } from "../services/apiService";
 
+interface DashboardData {
+  A: number;
+  B: number;
+  C: number;
+  Total_Parts: number;
+}
 
 const Dashboard: React.FC = () => {
   const { signOut } = useAuthenticator();
@@ -17,7 +23,7 @@ const Dashboard: React.FC = () => {
   const { warehouses, activeWarehouse, loading } = useSelector(
     (state: RootState) => state.warehouse
   );
-
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
   const [showInstanceInputsModal, setShowInstanceInputsModal] = useState(false);
@@ -27,9 +33,35 @@ const Dashboard: React.FC = () => {
   const sidePanelRef = useRef<HTMLDivElement | null>(null);
   //const warehouseRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  const getdashboardData = async () => {
+    if (!activeWarehouse) return;
+    setLoading(true);
+    const formData = {
+      resource_name: "DashboardDataView",
+      condition: `Warehouse_ID=${activeWarehouse.Warehouse_ID}`,
+    };
+    try {
+      const response = await apiPost("/get-data", formData);
+      if (response.data.statusCode === 200) {
+        setDashboardData(response.data.data[0] || null);
+      } else {
+        setDashboardData(null);
+        console.error("Error: Invalid response", response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching Categorization data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchWarehouses();
   }, []);
+
+  useEffect(() => {
+    getdashboardData();
+  }, [activeWarehouse]);
 
   useEffect(() => {
     if (sidePanelRef.current && activeIndex >= 0) {
@@ -92,8 +124,12 @@ const Dashboard: React.FC = () => {
 
   const handleCloseFileUploadModal = () =>{ setShowFileUploadModal(false);}
   const handleCloseInstanceInputsModal = () => setShowInstanceInputsModal(false);
-  const handleCloseABCReportingModal = () => setShowABCReportingModal(false);
+    const handleCloseABCReportingModal = () => {setShowABCReportingModal(false);getdashboardData()};
 
+  const handleABCModel=()=>{
+    setShowFileUploadModal(false);
+    setShowABCReportingModal(true)
+  }
   const refreshWarehouses = () => {
     fetchWarehouses('fromInput');
   };
@@ -124,7 +160,7 @@ const Dashboard: React.FC = () => {
       <FileUploadModal
         showModal={showFileUploadModal}
         handleCloseModal={handleCloseFileUploadModal}
-        handleProceed={() => setShowABCReportingModal(true)}
+        handleProceed={handleABCModel}
         source={source}
       />
 
@@ -146,7 +182,7 @@ const Dashboard: React.FC = () => {
               <p className="text-muted">No instances available</p>
             </div>
           ) : (
-            warehouses.map((warehouse, index) => (
+            warehouses.map((warehouse:any, index:number) => (
               <div
                 key={warehouse.Warehouse_ID}
                 className={`card position-relative mt-3 ${
@@ -199,7 +235,7 @@ const Dashboard: React.FC = () => {
           <div className="card">
             <div className="card-body">
               <h6 className="card-title">Part Numbers</h6>
-              <p>N/A</p>
+              <p>{dashboardData?.Total_Parts || "N/A"}</p>
               <button className="btn btn-primary btn-sm w-100">
                 View Product List
               </button>
@@ -235,13 +271,13 @@ const Dashboard: React.FC = () => {
             <div className="card-body">
               <h6 className="card-title">ABC Categorization</h6>
               <p>
-                A: N/A part numbers (Top 20%)
+                A: {dashboardData?.A || "N/A"} part numbers (Top {activeWarehouse?.Category_A_size || "N/A"}%)
                 <br />
-                B: N/A part numbers (Next 30%)
+                B: {dashboardData?.B || "N/A"} part numbers (Next {activeWarehouse?.Category_B_size || "N/A"}%)
                 <br />
-                C: N/A part numbers (Last 50%)
+                C: {dashboardData?.C || "N/A"} part numbers (Last {activeWarehouse?.Category_C_size || "N/A"}%)
               </p>
-              <button className="btn btn-primary btn-sm w-100">
+              <button className="btn btn-primary btn-sm w-100" onClick={()=>handleABCModel()}>
                 See ABC Categories
               </button>
             </div>

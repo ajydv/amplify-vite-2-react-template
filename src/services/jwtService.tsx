@@ -45,14 +45,14 @@ export const getUserLoginId = () => {
   return null;
 };
 
-export const refreshSession = async (refreshToken: string) => {
+export const refreshSession = async (refreshToken: string):Promise<{ newAccessToken: string | null, newRefreshToken: string | null }> => {
   const currentUser = userPool.getCurrentUser();
   if (!currentUser) {
     console.error("No current user logged in");
-    return;
+    return { newAccessToken: null, newRefreshToken: null };
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<{ newAccessToken: string | null, newRefreshToken: string | null }>((resolve, reject) => {
     const cognitoRefreshToken = new CognitoRefreshToken({ RefreshToken: refreshToken });
     currentUser.refreshSession(cognitoRefreshToken, (err, session) => {
       if (err) {
