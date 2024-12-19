@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getJWTToken } from "../services/jwtService";
@@ -19,26 +19,26 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
   const { activeWarehouse } = useSelector(
     (state: RootState) => state.warehouse
   );
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  useEffect(()=>{
+    resetForm()
+  },[activeWarehouse]);
+
+  useEffect(() => {
+    resetForm()
+  }, [showModal]);
+
+  const resetForm = () => {
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
     }
   };
-    useEffect(()=>{
-      setPrevState()
-    },[activeWarehouse]);
-
-    const setPrevState =()=>{
-      console.log('activeWarehouse',activeWarehouse)
-    // console.log(`activeWarehouse fileupload`,activeWarehouse);
-    
-    setFile(null);
-    }
-    
-  useEffect(() => {
-    setPrevState()
-  }, [showModal]);
-
   const handleApiCall = async () => {
    if (!file) {
       alert("Please select a file before proceeding.");
@@ -116,7 +116,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({ showModal, handleClos
               <label htmlFor="fileUpload" className="form-label">
                 Attachments
               </label>
-              <input className="form-control" type="file" id="fileUpload" onChange={handleFileChange} />
+              <input className="form-control" ref={fileInputRef} type="file" id="fileUpload" onChange={handleFileChange} />
             </div>
           </div>
           <div className="modal-footer">

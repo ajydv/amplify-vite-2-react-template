@@ -1,19 +1,39 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getJWTToken } from "../services/jwtService";
+import { RootState } from "../redux/store";
+import { useSelector } from "react-redux";
 
 interface InventoryUploadModalProps {
   showModal: boolean;
   handleCloseModal: () => void;
   handleProceed: () => void;
-  activeWarehouse: { Warehouse_ID: Number, Warehouse_Name: String, Created_Date: String } | null;
-  source: "inputInstance" | "uploadButton" | null;
 }
 
-const InventoryUploadModal: React.FC<InventoryUploadModalProps> = ({ showModal, handleCloseModal, handleProceed,activeWarehouse,source }) => {
+const InventoryUploadModal: React.FC<InventoryUploadModalProps> = ({ showModal, handleCloseModal, handleProceed }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
+  const { activeWarehouse } = useSelector(
+    (state: RootState) => state.warehouse
+  );
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  useEffect(()=>{
+    resetForm()
+  },[activeWarehouse]);
+
+  useEffect(() => {
+    resetForm()
+  }, [showModal]);
+
+  const resetForm = () => {
+    console.log(`activeWarehouse`,activeWarehouse);
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -21,70 +41,62 @@ const InventoryUploadModal: React.FC<InventoryUploadModalProps> = ({ showModal, 
     }
   };
 
-  useEffect(() => {
-    const setPrevState =()=>{
-      source === "inputInstance" ? console.log('source',source) : console.log(`activeWarehouse`,activeWarehouse);
-      
-      setFile(null);
-    }
-    setPrevState()
-  }, [showModal]);
-
   const handleApiCall = async () => {
-   if (!file) {
-      alert("Please select a file before proceeding.");
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      const jwtToken = await getJWTToken();
-
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onloadend = async () => {
-        const base64File = reader.result?.toString().split(",")[1];
-
-        if (!base64File) {
-          alert("Error reading file");
-          setIsUploading(false);
-          return;
-        }
-
-        const formData = {
-          bucket_name: 'test-parts-files-bucket',
-          file_name: file.name,
-          file: base64File,
-          Warehouse_ID: activeWarehouse?.Warehouse_ID,
-        };
-
-        const response = await axios.post(
-          `https://hphhshrpva.execute-api.us-east-2.amazonaws.com/dev/aj-auth-test`,
-          JSON.stringify(formData),
-          {
-            headers: {
-              Authorization: `Bearer ${jwtToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        setIsUploading(false);
-        const responseData = response.data;
-        if(responseData.statusCode==200){
-          alert(responseData.message);
-          setFile(null);
-          handleProceed();
-        }else{
-          alert(responseData.message)
-        }
-      };
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setIsUploading(false);
-      alert("Error uploading file");
-    }
-  };
+    if (!file) {
+       alert("Please select a file before proceeding.");
+       return;
+     }
+ 
+     setIsUploading(true);
+ 
+     try {
+       const { jwtToken } = await getJWTToken();
+ 
+       const reader = new FileReader();
+       reader.readAsDataURL(file);
+       reader.onloadend = async () => {
+         const base64File = reader.result?.toString().split(",")[1];
+ 
+         if (!base64File) {
+           alert("Error reading file");
+           setIsUploading(false);
+           return;
+         }
+ 
+         const formData = {
+           bucket_name: 'test-inventory-files-bucket',
+           file_name: file.name,
+           file: base64File,
+           Warehouse_ID: activeWarehouse?.Warehouse_ID,
+           Warehouse_Name: activeWarehouse?.Warehouse_Name
+         };
+ 
+         const response = await axios.post(
+           `https://hphhshrpva.execute-api.us-east-2.amazonaws.com/dev/aj-auth-test`,
+           formData,
+           {
+             headers: {
+               Authorization: `Bearer ${jwtToken}`,
+               "Content-Type": "application/json",
+             },
+           }
+         );
+         setIsUploading(false);
+         const responseData = response.data;
+         if(responseData.statusCode==200){
+           alert(responseData.message);
+           setFile(null);
+           handleProceed();
+         }else{
+           alert(responseData.message)
+         }
+       };
+     } catch (error) {
+       console.error("Error uploading file:", error);
+       setIsUploading(false);
+       alert("Error uploading file");
+     }
+   };
 
   return (
     <div
@@ -106,7 +118,7 @@ const InventoryUploadModal: React.FC<InventoryUploadModalProps> = ({ showModal, 
               <label htmlFor="fileUpload" className="form-label">
                 Attachments
               </label>
-              <input className="form-control" type="file" id="fileUpload" onChange={handleFileChange} />
+              <input className="form-control" ref={fileInputRef} type="file" id="fileUpload" onChange={handleFileChange} />
             </div>
           </div>
           <div className="modal-footer">
@@ -117,7 +129,7 @@ const InventoryUploadModal: React.FC<InventoryUploadModalProps> = ({ showModal, 
               onClick={handleApiCall}
               disabled={isUploading}
             >
-              {isUploading ? "Uploading..." : "Done"}
+              {isUploading ? "Uploading..." : "Upload"}
             </button>
           </div>
         </div>

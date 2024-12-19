@@ -8,6 +8,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../redux/store";
 import { setWarehouses, setLoading, setActiveWarehouse } from "../redux/slices/warehouse/actions";
 import { apiPost } from "../services/apiService";
+import InventoryUploadModal from "../components/InventoryUploadModal";
 
 interface DashboardData {
   A: number;
@@ -26,6 +27,7 @@ const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showFileUploadModal, setShowFileUploadModal] = useState(false);
+  const [showInventoryUploadModal, setShowInventoryUploadModal] = useState(false);
   const [showInstanceInputsModal, setShowInstanceInputsModal] = useState(false);
   const [showABCReportingModal, setShowABCReportingModal] = useState(false);
   const [source, setSource] = useState<"inputInstance" | "uploadButton" | null>(null);
@@ -124,7 +126,8 @@ const Dashboard: React.FC = () => {
 
   const handleCloseFileUploadModal = () =>{ setShowFileUploadModal(false);}
   const handleCloseInstanceInputsModal = () => setShowInstanceInputsModal(false);
-    const handleCloseABCReportingModal = () => {setShowABCReportingModal(false);getdashboardData()};
+  const handleCloseABCReportingModal = () => {setShowABCReportingModal(false);getdashboardData()};
+  const handleCloseInventoryUploadModal = () =>{ setShowInventoryUploadModal(false);}
 
   const handleABCModel=()=>{
     setShowFileUploadModal(false);
@@ -133,6 +136,17 @@ const Dashboard: React.FC = () => {
   const refreshWarehouses = () => {
     fetchWarehouses('fromInput');
   };
+
+  const dashboarUploadInventory = () =>{
+    setShowInventoryUploadModal(true);
+    setShowABCReportingModal(false);
+    setShowFileUploadModal(false);
+    setShowInstanceInputsModal(false);
+  }
+
+const handleInventoryModel= () =>{
+  setShowInventoryUploadModal(false);
+}
 
   return (
     <div className="container-fluid position-relative">
@@ -167,6 +181,12 @@ const Dashboard: React.FC = () => {
       <ABCReportingModal
         showModal={showABCReportingModal}
         handleCloseModal={handleCloseABCReportingModal}
+      />
+
+      <InventoryUploadModal
+        showModal={showInventoryUploadModal}
+        handleCloseModal={handleCloseInventoryUploadModal}
+        handleProceed={handleInventoryModel}
       />
 
       <div className="row mt-4">
@@ -212,9 +232,14 @@ const Dashboard: React.FC = () => {
       </div>
       <div className="row mb-4 position-relative z-index-1">
         <h4 className="mb-3 mt-4">Total Inventory Overview</h4>
-        <div className="col-md-4 mb-3">
+        <div className="col-md-2 mb-3">
         <button className="btn btn-primary w-100 rounded-pill" onClick={()=>dashboarUploadPart()}>
             Upload Parts File
+          </button>
+        </div>
+        <div className="col-md-3 mb-3">
+        <button className="btn btn-success w-100 rounded-pill" onClick={()=>dashboarUploadInventory()}>
+            Upload Inventory File
           </button>
         </div>
         <div className="col-md-4 mb-3">
@@ -222,7 +247,7 @@ const Dashboard: React.FC = () => {
                 Timeseries: Inventory vs. Actual Counts
               </button>
             </div>
-        <div className="col-md-4 mb-3">
+        <div className="col-md-3 mb-3">
           <button
             className="btn btn-success w-100 rounded-pill"
             onClick={() => navigate('/dailycount')}>
