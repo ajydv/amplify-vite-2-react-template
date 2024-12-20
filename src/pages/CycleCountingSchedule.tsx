@@ -102,7 +102,7 @@ const CycleCountingSchedule: React.FC = () => {
           <h5>Cycle Counting Schedule</h5>
         </div>
         <div className="col-md-6 text-end">
-          <button className="btn btn-light">Create New Cycle Counting Instance</button>
+          <button className="btn btn-light">Create New Cycle Counting Instance 1</button>
           <button className="btn btn-danger ms-2">Sign Out</button>
         </div>
       </header>
