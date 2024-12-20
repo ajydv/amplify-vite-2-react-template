@@ -1,0 +1,96 @@
+.container-fluid {
+  padding: 0;
+}
+
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.calendar-cell {
+  width: 14.28%;
+  height: 100px;
+  text-align: center;
+  vertical-align: top;
+  border: 1px solid #ddd;
+  padding: 5px;
+}
+
+.calendar-cell.outside-month {
+  background-color: #f9f9f9;
+  color: #ccc;
+}
+
+.calendar-cell.disabled {
+  background-color: #f8d7da;
+}
+
+.calendar-cell.part-green {
+  background-color: #d4edda;
+}
+
+.calendar-cell.part-yellow {
+  background-color: #fff3cd;
+}
+
+.calendar-cell.part-red {
+  background-color: #f8d7da;
+}
+
+.date {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.part-button {
+  background: none;
+  border: none;
+  color: #fff;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.part-green .part-button {
+  background-color: #28a745;
+}
+
+.part-yellow .part-button {
+  background-color: #ffc107;
+}
+
+.part-red .part-button {
+  background-color: #dc3545;
+}
+
+.legend-item {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  border-radius: 50%;
+}
+
+.legend-item.green {
+  background-color: #28a745;
+}
+
+.legend-item.yellow {
+  background-color: #ffc107;
+}
+
+.legend-item.red {
+  background-color: #dc3545;
+}
+
+.calendar-header {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-header h3 {
+  margin: 0 20px;
+}

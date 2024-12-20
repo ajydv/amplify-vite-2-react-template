@@ -336,7 +336,7 @@ const handleInventoryModel= () =>{
                 <br />
                 Yesterday - N/A parts
               </p>
-              <button className="btn btn-primary btn-sm w-100">
+              <button className="btn btn-primary btn-sm w-100" onClick={() => navigate('/cycleCountingSchedule')}>
                 See Calendar
               </button>
             </div>

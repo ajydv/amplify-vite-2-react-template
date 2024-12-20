@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Upload from "../pages/Upload";
 import Dashboard from "../pages/Dashboard";
 import DailyCount from "../pages/DailyCount";
+import CycleCountingSchedule from "../pages/CycleCountingSchedule";
 
 const AppRouter = () => {
   return (
@@ -12,6 +13,7 @@ const AppRouter = () => {
         {/* <Route path="/" element={<Home />} /> */}
         <Route path="/upload" element={<Upload />} />
         <Route path="/dailycount" element={<DailyCount/>}/>
+        <Route path="/cycleCountingSchedule" element={<CycleCountingSchedule/>}/>
       </Routes>
     </Router>
   );
